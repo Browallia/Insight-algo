@@ -10,7 +10,19 @@ The algorith of InSight
 
 训练：运行train.py	--args详见代码
 
+**PS**
+
+```
+python train.py --data_dir "./data" --epochs 20 --save_dir "checkpoint1.pkl" 
+```
+
 预测：运行predict.py	--args详见代码
+
+**PS**
+
+```
+python predict.py --save_dir "checkpoint1.pkl" --dirpic "./data/test/0/4478.jpg"
+```
 
 数据集：按照图片标签分类
 

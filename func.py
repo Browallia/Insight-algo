@@ -15,7 +15,7 @@ import argparse
 def train_args():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--load',help = 'load the checkpoint or new training',default = '1')
+    parser.add_argument('--load',help = 'load the checkpoint or new training',default = 0)
     parser.add_argument('--data_dir',help = 'path to the image folder')
     parser.add_argument('--save_dir',help = 'path to the training checkpoint')
     parser.add_argument('--arch',help = 'the architechture of the network',default = 'vgg')
@@ -31,7 +31,7 @@ def predict_args():
     
     parser.add_argument('--topk',help = 'print the top N class',default = 3)
     parser.add_argument('--category_names',help = 'the index of the labels to classes',default = './label_id_name.json')
-    parser.add_argument('--device',help = 'CPU OR CUDA',default = 'cpu')
+    parser.add_argument('--device',help = 'CPU OR CUDA',default = 'cuda')
     parser.add_argument('--arch',help = 'the architechture of the network',default = 'vgg')
     parser.add_argument('--save_dir',help = 'path to the training checkpoint')
     parser.add_argument('--dirpic',help = 'path to the picture to test')
@@ -40,11 +40,11 @@ def predict_args():
 def accuracy_test(model, dataloader):
     correct = 0
     total = 0
-    #model.cuda()   #如果用GPU计算则取消注释
+    model.cuda()   #如果用GPU计算则取消注释
     with torch.no_grad():   #验证集关闭梯度计算
         for data in dataloader:
             images, labels = data
-            #images, labels = images.to('cuda'),labels.to('cuda')
+            images, labels = images.to('cuda'),labels.to('cuda')
 
             outputs = model(images)
             _, predict = torch.max(outputs.data, 1)
@@ -58,17 +58,17 @@ def train(model, trainloader, validloader, epochs, criterion, step_to_print, opt
     epochs = epochs#迭代次数
     step_to_print = step_to_print
     steps = 0
-    # model.to(device)  如果有GPU则输入 device = 'cuda'
+    model.to(device)  #如果有GPU则输入 device = 'cuda'
     for epoch in range(epochs):
         running_loss = 0
         for step, (inputs, labels) in enumerate(trainloader):
             steps += 1
-            # inputs, labels = inputs.to('device'), labels.to('device')
+            inputs, labels = inputs.to(device), labels.to(device)
             optimizer.zero_grad()
 
             #前馈及反馈
             outputs = model(inputs) #正向传播
-            loss = criterion(outputs, labels)#计算误差
+            loss = criterion(outputs, labels).cpu()#计算误差
             loss.backward()#反向传播
             optimizer.step()#更新参数
             
@@ -76,7 +76,8 @@ def train(model, trainloader, validloader, epochs, criterion, step_to_print, opt
             if steps % step_to_print == 0:
                 print('EPOCHS: {}/{}'.format(epoch+1, epochs),
                 '|','LOSS: {:.4f}'.format(running_loss/step_to_print))
-            accuracy_test(model, validloader)
+                running_loss = 0
+                accuracy_test(model, validloader)
 
 #加载模型
 def model_load(model, ckp_path):
@@ -129,7 +130,9 @@ def predict(image_path, model, topk=3):
     img = process_image(image_path)
     img = img.unsqueeze(0)#将图片增加一维
     # img = img.cuda()
+    # model = model.cuda()
     result = model(img).topk(topk)
+    print(result)
     probs= []
     classes = []
     a = result[0]
@@ -138,6 +141,6 @@ def predict(image_path, model, topk=3):
     for i in a[0]:
         probs.append(torch.exp(i).tolist())
     for n in b[0]:
-        classes.append(str(n+1))
+        classes.append(str(n))
     
     return(probs,classes)

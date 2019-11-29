@@ -12,12 +12,12 @@ from func import *
 def main():
 
     pre_arg = predict_args()
-    # resnet18 = models.resnet18(pretrained=True)
-    # alexnet = models.alexnet(pretrained=True)
+    resnet18 = models.resnet18(pretrained=True)
+    alexnet = models.alexnet(pretrained=True)
     vgg16 = models.vgg16(pretrained=True)
 
-    # model = {'resnet': resnet18, 'alexnet': alexnet, 'vgg': vgg16}
-    model = {'vgg' : vgg16}
+    model = {'resnet': resnet18, 'alexnet': alexnet, 'vgg': vgg16}
+    # model = {'vgg' : vgg16}
     fmodel = model[pre_arg.arch]
     for param in fmodel.parameters():#冻结梯度
         param.require_grad = False
@@ -30,7 +30,7 @@ def main():
                                 ('output',nn.LogSoftmax(dim = 1))
     ]))
     fmodel.classifier = classifier
-    # model_load(fmodel, pre_arg.save_dir)
+    model_load(fmodel, pre_arg.save_dir)
 
     result = predict(pre_arg.dirpic,fmodel,pre_arg.topk)
     probs = result[0]
